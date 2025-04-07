@@ -2,8 +2,36 @@
 import { toast } from "sonner";
 import { parse } from "node-html-parser";
 
-// Clé API fournie
-const API_KEY = 'V06SpYv2b/ptbqPxnvvhtg==3F5KAONfyIW0JKVl';
+// API key variable that can be updated
+let API_KEY = 'V06SpYv2b/ptbqPxnvvhtg==3F5KAONfyIW0JKVl';
+
+// Function to update the API key
+export function updateApiKey(newKey: string) {
+  API_KEY = newKey;
+}
+
+// Function to validate the API key
+export async function validateApiKey(key: string): Promise<boolean> {
+  try {
+    // Test the API with the provided key
+    const response = await fetch('https://api.api-ninjas.com/v1/webscraper?url=https://fr.tradingview.com/markets/futures/quotes-metals/', {
+      headers: {
+        'X-Api-Key': key
+      }
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    // If we get a successful response, the key is valid
+    const data = await response.json();
+    return !!data && !!data.data;
+  } catch (error) {
+    console.error('Error validating API key:', error);
+    return false;
+  }
+}
 
 // Interfaces pour les données des matières premières
 export interface Commodity {
