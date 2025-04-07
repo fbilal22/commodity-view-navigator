@@ -29,8 +29,8 @@ export default function CommoditiesDashboard() {
       }
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
-      setError("Erreur lors du chargement des données");
-      toast.error("Erreur lors du chargement des données");
+      setError("Erreur lors du chargement des données. Veuillez réessayer plus tard.");
+      setCommodities([]);
     } finally {
       setLoading(false);
     }
@@ -128,19 +128,23 @@ export default function CommoditiesDashboard() {
         <TabsContent value="all" className="space-y-6">
           {loading ? (
             <Skeleton className="h-[300px] w-full rounded-md" />
-          ) : (
+          ) : commodities.length > 0 ? (
             <CommoditiesTable commodities={commodities} />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucune donnée disponible
+            </div>
           )}
           
           {loading ? (
             <LoadingCards count={4} />
-          ) : (
+          ) : commodities.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {commodities.slice(0, 4).map(commodity => (
                 <CommodityCard key={commodity.symbol} commodity={commodity} />
               ))}
             </div>
-          )}
+          ) : null}
         </TabsContent>
         
         <TabsContent value="precious" className="space-y-6">
@@ -157,11 +161,15 @@ export default function CommoditiesDashboard() {
                       <Skeleton key={i} className="h-[100px] w-full" />
                     ))}
                   </div>
-                ) : (
+                ) : goldCommodities.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {goldCommodities.map(commodity => (
                       <CommodityCard key={commodity.symbol} commodity={commodity} />
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Aucune donnée disponible
                   </div>
                 )}
               </CardContent>
@@ -179,11 +187,15 @@ export default function CommoditiesDashboard() {
                       <Skeleton key={i} className="h-[100px] w-full" />
                     ))}
                   </div>
-                ) : (
+                ) : silverCommodities.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {silverCommodities.map(commodity => (
                       <CommodityCard key={commodity.symbol} commodity={commodity} />
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Aucune donnée disponible
                   </div>
                 )}
               </CardContent>
@@ -205,11 +217,15 @@ export default function CommoditiesDashboard() {
                       <Skeleton key={i} className="h-[100px] w-full" />
                     ))}
                   </div>
-                ) : (
+                ) : copperCommodities.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {copperCommodities.map(commodity => (
                       <CommodityCard key={commodity.symbol} commodity={commodity} />
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Aucune donnée disponible
                   </div>
                 )}
               </CardContent>
@@ -227,11 +243,15 @@ export default function CommoditiesDashboard() {
                       <Skeleton key={i} className="h-[100px] w-full" />
                     ))}
                   </div>
-                ) : (
+                ) : aluminumCommodities.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {aluminumCommodities.slice(0, 3).map(commodity => (
                       <CommodityCard key={commodity.symbol} commodity={commodity} />
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Aucune donnée disponible
                   </div>
                 )}
               </CardContent>
@@ -249,11 +269,15 @@ export default function CommoditiesDashboard() {
                       <Skeleton key={i} className="h-[100px] w-full" />
                     ))}
                   </div>
-                ) : (
+                ) : cobaltCommodities.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {cobaltCommodities.map(commodity => (
                       <CommodityCard key={commodity.symbol} commodity={commodity} />
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Aucune donnée disponible
                   </div>
                 )}
               </CardContent>

@@ -23,6 +23,9 @@ export interface Commodity {
  */
 export async function fetchCommoditiesData(): Promise<Commodity[]> {
   try {
+    // Afficher un message de chargement
+    console.log("Fetching data from TradingView...");
+    
     const response = await fetch('https://api.api-ninjas.com/v1/webscraper?url=https://fr.tradingview.com/markets/futures/quotes-metals/', {
       headers: {
         'X-Api-Key': API_KEY
@@ -34,13 +37,14 @@ export async function fetchCommoditiesData(): Promise<Commodity[]> {
     }
 
     const data = await response.json();
+    console.log("Raw API response:", data);
     
     // Analyse du HTML récupéré pour extraire les données des matières premières
     return parseCommoditiesData(data);
   } catch (error) {
     console.error('Erreur lors de la récupération des données:', error);
     toast.error('Erreur lors de la récupération des données');
-    return [];
+    throw error; // Propagate the error instead of returning empty array
   }
 }
 
@@ -71,62 +75,110 @@ function getCommodityType(symbol: string, name: string): Commodity['type'] {
  */
 function parseCommoditiesData(data: any): Commodity[] {
   try {
-    console.log("Données reçues de l'API:", data);
+    console.log("Parsing data from API response");
+    
+    // Vérifier si nous avons des données
+    if (!data || !data.data) {
+      console.error("Données invalides reçues de l'API");
+      throw new Error("Données invalides reçues de l'API");
+    }
     
     // Parseage du HTML
     const htmlContent = data.data;
-    if (!htmlContent) {
-      console.error("Pas de contenu HTML dans la réponse");
-      return [];
-    }
+    console.log("HTML content length:", htmlContent.length);
     
     // Utilisation de node-html-parser pour analyser le HTML
     const root = parse(htmlContent);
     
-    // Sélectionnez les lignes du tableau des matières premières
-    const commodityRows = root.querySelectorAll('.tv-screener__content .tv-data-table__row');
+    // Log the full HTML to see its structure
+    console.log("HTML structure:", root.toString().substring(0, 1000));
+    
+    // Essayer différentes sélections pour trouver les données
+    // Sélection 1: Tableaux de données
+    let commodityRows = root.querySelectorAll('.tv-data-table__row');
+    console.log("Data table rows found:", commodityRows.length);
+    
+    // Sélection 2: Si la sélection 1 ne fonctionne pas, essayer une autre sélection
+    if (!commodityRows || commodityRows.length === 0) {
+      commodityRows = root.querySelectorAll('tr[data-rowid]');
+      console.log("Row data found with tr[data-rowid]:", commodityRows.length);
+    }
+
+    // Sélection 3: Essayer une sélection plus générique
+    if (!commodityRows || commodityRows.length === 0) {
+      commodityRows = root.querySelectorAll('table tr');
+      console.log("Generic table rows found:", commodityRows.length);
+    }
     
     if (!commodityRows || commodityRows.length === 0) {
       console.error("Aucune ligne de matière première trouvée dans le HTML");
-      console.log("HTML reçu:", htmlContent.substring(0, 500) + "...");
-      
-      // Comme le scraping ne fonctionne pas correctement, nous allons utiliser des données fictives pour la démo
-      // Dans un environnement de production, nous résoudrions le problème de parsing
-      return getFallbackCommoditiesData();
+      // Log a sample of the HTML for debugging
+      console.log("HTML sample:", htmlContent.substring(0, 1000));
+      throw new Error("Échec de l'extraction des données");
     }
     
     const commodities: Commodity[] = [];
     
-    commodityRows.forEach(row => {
+    commodityRows.forEach((row, index) => {
       try {
-        // Extraire les données de chaque cellule
-        const cells = row.querySelectorAll('.tv-data-table__cell');
+        console.log(`Processing row ${index}:`, row.toString().substring(0, 200));
         
-        if (cells.length < 7) {
+        // Extraire les données de chaque cellule
+        const cells = row.querySelectorAll('td');
+        
+        if (!cells || cells.length < 6) {
+          console.log(`Row ${index}: Not enough cells (${cells?.length || 0}), skipping`);
           return; // Ligne incomplète, on saute
         }
         
-        const symbolElement = cells[0].querySelector('.tv-screener-table__symbol');
-        const symbol = symbolElement ? symbolElement.text.trim() : '';
+        // Extraire le symbole et le nom
+        const firstCell = cells[0];
+        console.log(`Row ${index}, First cell:`, firstCell.toString());
         
-        const nameElement = cells[0].querySelector('.tv-screener-table__description');
-        const name = nameElement ? nameElement.text.trim() : '';
+        let symbol = '';
+        let name = '';
         
-        const priceText = cells[1].text.trim().replace(',', '.');
+        // Essayer d'extraire le symbole et le nom avec différentes méthodes
+        const symbolElement = firstCell.querySelector('.symbol-name');
+        if (symbolElement) {
+          symbol = symbolElement.text.trim();
+          name = symbolElement.getAttribute('title') || '';
+        } else {
+          // Autre méthode d'extraction
+          const allText = firstCell.text.trim();
+          const parts = allText.split(/\s+/);
+          symbol = parts[0] || '';
+          name = parts.slice(1).join(' ');
+        }
+        
+        if (!symbol) {
+          console.log(`Row ${index}: No symbol found, skipping`);
+          return;
+        }
+        
+        // Extraire les autres informations
+        console.log(`Row ${index}: Processing price from cell 1`);
+        const priceText = cells[1]?.text.trim().replace(/[^\d.,]/g, '').replace(',', '.');
         const price = parseFloat(priceText) || 0;
         
-        const percentChangeText = cells[2].text.trim().replace(',', '.').replace('%', '');
+        console.log(`Row ${index}: Processing percent change from cell 2`);
+        const percentChangeText = cells[2]?.text.trim().replace(/[^-\d.,]/g, '').replace(',', '.');
         const percentChange = parseFloat(percentChangeText) || 0;
         
-        const absoluteChangeText = cells[3].text.trim().replace(',', '.');
+        console.log(`Row ${index}: Processing absolute change from cell 3`);
+        const absoluteChangeText = cells[3]?.text.trim().replace(/[^-\d.,]/g, '').replace(',', '.');
         const absoluteChange = parseFloat(absoluteChangeText) || 0;
         
-        const highText = cells[4].text.trim().replace(',', '.');
+        console.log(`Row ${index}: Processing high from cell 4`);
+        const highText = cells[4]?.text.trim().replace(/[^\d.,]/g, '').replace(',', '.');
         const high = parseFloat(highText) || 0;
         
-        const lowText = cells[5].text.trim().replace(',', '.');
+        console.log(`Row ${index}: Processing low from cell 5`);
+        const lowText = cells[5]?.text.trim().replace(/[^\d.,]/g, '').replace(',', '.');
         const low = parseFloat(lowText) || 0;
         
+        // Évaluation technique (si disponible)
+        console.log(`Row ${index}: Processing evaluation from cell 6`);
         const technicalEvaluation = cells[6]?.text.trim() || 'Neutre';
         
         // Déterminer le type de matière première
@@ -143,138 +195,22 @@ function parseCommoditiesData(data: any): Commodity[] {
           technicalEvaluation,
           type
         });
+        
+        console.log(`Successfully processed commodity: ${symbol}`);
       } catch (err) {
-        console.error('Erreur lors de l\'analyse d\'une ligne:', err);
+        console.error(`Erreur lors de l'analyse de la ligne ${index}:`, err);
       }
     });
     
     if (commodities.length === 0) {
-      console.warn("Aucune matière première n'a pu être extraite, utilisation des données de secours");
-      return getFallbackCommoditiesData();
+      console.error("Aucune matière première n'a pu être extraite");
+      throw new Error("Aucune matière première n'a pu être extraite");
     }
     
+    console.log(`Successfully extracted ${commodities.length} commodities`);
     return commodities;
   } catch (error) {
     console.error('Erreur lors de l\'analyse des données:', error);
-    return getFallbackCommoditiesData();
+    throw error;
   }
-}
-
-/**
- * Données de secours au cas où l'extraction de données échoue
- */
-function getFallbackCommoditiesData(): Commodity[] {
-  console.log("Utilisation des données de secours");
-  return [
-    {
-      symbol: "1OZ!",
-      name: "1-Ounce Gold Futures",
-      price: 3042.75,
-      percentChange: 0.24,
-      absoluteChange: 7.25,
-      high: 3081.75,
-      low: 2988.00,
-      technicalEvaluation: "Neutre",
-      type: 'gold'
-    },
-    {
-      symbol: "AG!",
-      name: "Silver Futures",
-      price: 7663,
-      percentChange: -8.48,
-      absoluteChange: -710,
-      high: 7815,
-      low: 7535,
-      technicalEvaluation: "Strong Sell",
-      type: 'silver'
-    },
-    {
-      symbol: "AH!",
-      name: "Aluminium High Grade Futures",
-      price: 2339.50,
-      percentChange: -1.02,
-      absoluteChange: -24.03,
-      high: 2352.50,
-      low: 2339.50,
-      technicalEvaluation: "Strong Sell",
-      type: 'aluminum'
-    },
-    {
-      symbol: "AL!",
-      name: "Aluminum Futures",
-      price: 19545,
-      percentChange: -4.36,
-      absoluteChange: -890,
-      high: 19905,
-      low: 19000,
-      technicalEvaluation: "Strong Sell",
-      type: 'aluminum'
-    },
-    {
-      symbol: "ALH!",
-      name: "Aluminum Futures",
-      price: 2209.50,
-      percentChange: -3.78,
-      absoluteChange: -86.75,
-      high: 2209.50,
-      low: 2209.50,
-      technicalEvaluation: "Strong Sell",
-      type: 'aluminum'
-    },
-    {
-      symbol: "ALUMIN!",
-      name: "Aluminium Mini Futures",
-      price: 230.45,
-      percentChange: -0.99,
-      absoluteChange: -2.30,
-      high: 235.85,
-      low: 229.85,
-      technicalEvaluation: "Strong Sell",
-      type: 'aluminum'
-    },
-    {
-      symbol: "AU!",
-      name: "Gold Futures",
-      price: 716.58,
-      percentChange: -3.06,
-      absoluteChange: -22.64,
-      high: 728.00,
-      low: 701.00,
-      technicalEvaluation: "Buy",
-      type: 'gold'
-    },
-    {
-      symbol: "CA!",
-      name: "Grade A Copper Futures",
-      price: 8765.00,
-      percentChange: 0.12,
-      absoluteChange: 10.74,
-      high: 8943.00,
-      low: 8223.00,
-      technicalEvaluation: "Sell",
-      type: 'copper'
-    },
-    {
-      symbol: "CO!",
-      name: "Cobalt Futures",
-      price: 33300,
-      percentChange: -0.74,
-      absoluteChange: -245,
-      high: 33300,
-      low: 33300,
-      technicalEvaluation: "Neutre",
-      type: 'cobalt'
-    },
-    {
-      symbol: "COPPER!",
-      name: "Copper Futures",
-      price: 801.60,
-      percentChange: -0.40,
-      absoluteChange: -3.20,
-      high: 826.40,
-      low: 792.20,
-      technicalEvaluation: "Strong Sell",
-      type: 'copper'
-    }
-  ];
 }
