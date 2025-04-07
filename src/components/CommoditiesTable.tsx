@@ -15,13 +15,13 @@ export default function CommoditiesTable({ commodities }: CommoditiesTableProps)
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[180px]">Symbole</TableHead>
-            <TableHead className="text-right">Prix</TableHead>
-            <TableHead className="text-right">Variation %</TableHead>
-            <TableHead className="text-right">Variation</TableHead>
-            <TableHead className="text-right">Haut</TableHead>
-            <TableHead className="text-right">Bas</TableHead>
-            <TableHead className="text-right">Évaluation technique</TableHead>
+            <TableHead className="w-[180px]">Symbol</TableHead>
+            <TableHead className="text-right">Price</TableHead>
+            <TableHead className="text-right">Change %</TableHead>
+            <TableHead className="text-right">Change</TableHead>
+            <TableHead className="text-right">High</TableHead>
+            <TableHead className="text-right">Low</TableHead>
+            <TableHead className="text-right">Technical Rating</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

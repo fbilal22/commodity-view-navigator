@@ -53,7 +53,7 @@ const Index = () => {
       <div className="container mx-auto py-8 px-4 flex justify-center items-center min-h-[50vh]">
         <div className="text-center">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Vérification de la configuration...</p>
+          <p className="text-muted-foreground">Checking configuration...</p>
         </div>
       </div>
     );
@@ -66,7 +66,7 @@ const Index = () => {
           <div className="mb-4 flex justify-end">
             <Button variant="outline" size="sm" onClick={handleChangeKey}>
               <KeyRound className="mr-2 h-4 w-4" />
-              Changer la clé API
+              Change API Key
             </Button>
           </div>
           <CommoditiesDashboard />
@@ -77,7 +77,7 @@ const Index = () => {
             <Alert>
               <AlertDescription className="flex items-center gap-2">
                 <KeyRound className="h-4 w-4" />
-                Vous devez configurer votre clé API pour accéder au tableau de bord des matières premières.
+                You need to configure your API key to access the commodities dashboard.
               </AlertDescription>
             </Alert>
           )}

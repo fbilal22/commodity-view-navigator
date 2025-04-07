@@ -13,7 +13,7 @@ import { KeyRound, Loader2 } from "lucide-react";
 
 // Validation schema for the API key
 const apiKeySchema = z.object({
-  apiKey: z.string().min(10, "L'API key doit avoir au moins 10 caractères")
+  apiKey: z.string().min(10, "API key must be at least 10 characters")
 });
 
 type ApiKeyFormValues = z.infer<typeof apiKeySchema>;
@@ -41,16 +41,16 @@ export default function ApiKeyForm({ onValidKey, defaultKey = "" }: ApiKeyFormPr
       
       if (isValid) {
         updateApiKey(data.apiKey);
-        toast.success("Clé API valide ! Chargement des données...");
+        toast.success("Valid API key! Loading data...");
         onValidKey(data.apiKey);
         
         // Store in localStorage for future use
         localStorage.setItem("ninjaApiKey", data.apiKey);
       } else {
-        toast.error("Clé API invalide. Veuillez vérifier votre clé et réessayer.");
+        toast.error("Invalid API key. Please check your key and try again.");
       }
     } catch (error) {
-      toast.error("Erreur lors de la validation de la clé API");
+      toast.error("Error validating API key");
       console.error("API key validation error:", error);
     } finally {
       setIsValidating(false);
@@ -62,10 +62,10 @@ export default function ApiKeyForm({ onValidKey, defaultKey = "" }: ApiKeyFormPr
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <KeyRound className="h-5 w-5" />
-          Configuration de l'API
+          API Configuration
         </CardTitle>
         <CardDescription>
-          Veuillez entrer votre clé API Ninja pour accéder aux données des matières premières.
+          Please enter your Ninja API key to access the commodities data.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -76,10 +76,10 @@ export default function ApiKeyForm({ onValidKey, defaultKey = "" }: ApiKeyFormPr
               name="apiKey"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Clé API Ninja</FormLabel>
+                  <FormLabel>Ninja API Key</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Entrez votre clé API..." 
+                      placeholder="Enter your API key..." 
                       {...field} 
                       type="password"
                     />
@@ -97,17 +97,17 @@ export default function ApiKeyForm({ onValidKey, defaultKey = "" }: ApiKeyFormPr
               {isValidating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Validation en cours...
+                  Validating...
                 </>
               ) : (
-                "Valider la clé API"
+                "Validate API Key"
               )}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
-        <p>Votre clé API est stockée localement et n'est jamais partagée.</p>
+        <p>Your API key is stored locally and never shared.</p>
       </CardFooter>
     </Card>
   );

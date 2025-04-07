@@ -25,11 +25,11 @@ export default function CommoditiesDashboard() {
       setLastUpdated(new Date());
       
       if (data.length === 0) {
-        setError("Aucune donnée n'a été trouvée");
+        setError("No data found");
       }
     } catch (error) {
-      console.error("Erreur lors du chargement des données:", error);
-      setError("Erreur lors du chargement des données. Veuillez réessayer plus tard.");
+      console.error("Error loading data:", error);
+      setError("Error loading data. Please try again later.");
       setCommodities([]);
     } finally {
       setLoading(false);
@@ -39,7 +39,7 @@ export default function CommoditiesDashboard() {
   useEffect(() => {
     loadData();
     
-    // Rafraîchissement des données toutes les 5 minutes
+    // Refresh data every 5 minutes
     const interval = setInterval(() => {
       loadData();
     }, 5 * 60 * 1000);
@@ -47,14 +47,14 @@ export default function CommoditiesDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Filtrer les commodités par types
+  // Filter commodities by type
   const goldCommodities = commodities.filter(c => c.type === 'gold');
   const silverCommodities = commodities.filter(c => c.type === 'silver');
   const copperCommodities = commodities.filter(c => c.type === 'copper');
   const aluminumCommodities = commodities.filter(c => c.type === 'aluminum');
   const cobaltCommodities = commodities.filter(c => c.type === 'cobalt');
 
-  // Composant de chargement pour un groupe de cartes
+  // Loading cards component
   const LoadingCards = ({ count = 4 }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: count }).map((_, i) => (
@@ -87,16 +87,16 @@ export default function CommoditiesDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tableau de bord des matières premières</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Commodities Dashboard</h1>
           <p className="text-muted-foreground">
-            Suivez les prix et les tendances des métaux précieux et industriels
+            Track prices and trends of precious and industrial metals
           </p>
         </div>
         
         <div className="flex items-center gap-2">
           {lastUpdated && (
             <p className="text-sm text-muted-foreground">
-              Dernière mise à jour: {lastUpdated.toLocaleTimeString()}
+              Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
           <Button
@@ -106,7 +106,7 @@ export default function CommoditiesDashboard() {
             disabled={loading}
           >
             <RefreshCw size={16} className={loading ? "animate-spin mr-2" : "mr-2"} />
-            Actualiser
+            Refresh
           </Button>
         </div>
       </div>
@@ -120,9 +120,9 @@ export default function CommoditiesDashboard() {
 
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="all">Tous</TabsTrigger>
-          <TabsTrigger value="precious">Métaux précieux</TabsTrigger>
-          <TabsTrigger value="industrial">Métaux industriels</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="precious">Precious Metals</TabsTrigger>
+          <TabsTrigger value="industrial">Industrial Metals</TabsTrigger>
         </TabsList>
         
         <TabsContent value="all" className="space-y-6">
@@ -132,7 +132,7 @@ export default function CommoditiesDashboard() {
             <CommoditiesTable commodities={commodities} />
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              Aucune donnée disponible
+              No data available
             </div>
           )}
           
@@ -151,8 +151,8 @@ export default function CommoditiesDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Or</CardTitle>
-                <CardDescription>Tendance actuelle des contrats à terme sur l'or</CardDescription>
+                <CardTitle>Gold</CardTitle>
+                <CardDescription>Current trend of gold futures contracts</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -169,7 +169,7 @@ export default function CommoditiesDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
-                    Aucune donnée disponible
+                    No data available
                   </div>
                 )}
               </CardContent>
@@ -177,8 +177,8 @@ export default function CommoditiesDashboard() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Argent</CardTitle>
-                <CardDescription>Tendance actuelle des contrats à terme sur l'argent</CardDescription>
+                <CardTitle>Silver</CardTitle>
+                <CardDescription>Current trend of silver futures contracts</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -195,7 +195,7 @@ export default function CommoditiesDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
-                    Aucune donnée disponible
+                    No data available
                   </div>
                 )}
               </CardContent>
@@ -207,8 +207,8 @@ export default function CommoditiesDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Cuivre</CardTitle>
-                <CardDescription>Tendance actuelle des contrats à terme sur le cuivre</CardDescription>
+                <CardTitle>Copper</CardTitle>
+                <CardDescription>Current trend of copper futures contracts</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -225,7 +225,7 @@ export default function CommoditiesDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
-                    Aucune donnée disponible
+                    No data available
                   </div>
                 )}
               </CardContent>
@@ -233,8 +233,8 @@ export default function CommoditiesDashboard() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Aluminium</CardTitle>
-                <CardDescription>Tendance actuelle des contrats à terme sur l'aluminium</CardDescription>
+                <CardTitle>Aluminum</CardTitle>
+                <CardDescription>Current trend of aluminum futures contracts</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -251,7 +251,7 @@ export default function CommoditiesDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
-                    Aucune donnée disponible
+                    No data available
                   </div>
                 )}
               </CardContent>
@@ -260,7 +260,7 @@ export default function CommoditiesDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Cobalt</CardTitle>
-                <CardDescription>Tendance actuelle des contrats à terme sur le cobalt</CardDescription>
+                <CardDescription>Current trend of cobalt futures contracts</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -277,7 +277,7 @@ export default function CommoditiesDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
-                    Aucune donnée disponible
+                    No data available
                   </div>
                 )}
               </CardContent>

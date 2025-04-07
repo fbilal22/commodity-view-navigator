@@ -14,7 +14,7 @@ export function updateApiKey(newKey: string) {
 export async function validateApiKey(key: string): Promise<boolean> {
   try {
     // Test the API with the provided key
-    const response = await fetch('https://api.api-ninjas.com/v1/webscraper?url=https://fr.tradingview.com/markets/futures/quotes-metals/', {
+    const response = await fetch('https://api.api-ninjas.com/v1/webscraper?url=https://www.tradingview.com/markets/futures/quotes-metals/', {
       headers: {
         'X-Api-Key': key
       }
@@ -33,7 +33,7 @@ export async function validateApiKey(key: string): Promise<boolean> {
   }
 }
 
-// Interfaces pour les données des matières premières
+// Interfaces for commodity data
 export interface Commodity {
   symbol: string;
   name: string;
@@ -47,37 +47,37 @@ export interface Commodity {
 }
 
 /**
- * Récupère les données des matières premières depuis TradingView via l'API Ninja
+ * Fetches commodity data from TradingView via the API Ninja
  */
 export async function fetchCommoditiesData(): Promise<Commodity[]> {
   try {
-    // Afficher un message de chargement
+    // Show loading message
     console.log("Fetching data from TradingView...");
     
-    const response = await fetch('https://api.api-ninjas.com/v1/webscraper?url=https://fr.tradingview.com/markets/futures/quotes-metals/', {
+    const response = await fetch('https://api.api-ninjas.com/v1/webscraper?url=https://www.tradingview.com/markets/futures/quotes-metals/', {
       headers: {
         'X-Api-Key': API_KEY
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Erreur API: ${response.status}`);
+      throw new Error(`API Error: ${response.status}`);
     }
 
     const data = await response.json();
     console.log("Raw API response:", data);
     
-    // Analyse du HTML récupéré pour extraire les données des matières premières
+    // Parse the HTML retrieved to extract commodity data
     return parseCommoditiesData(data);
   } catch (error) {
-    console.error('Erreur lors de la récupération des données:', error);
-    toast.error('Erreur lors de la récupération des données');
+    console.error('Error fetching data:', error);
+    toast.error('Error fetching data');
     throw error; // Propagate the error instead of returning empty array
   }
 }
 
 /**
- * Détermine le type de matière première à partir du symbole ou du nom
+ * Determines the type of commodity from symbol or name
  */
 function getCommodityType(symbol: string, name: string): Commodity['type'] {
   const lowerSymbol = symbol.toLowerCase();
@@ -99,50 +99,50 @@ function getCommodityType(symbol: string, name: string): Commodity['type'] {
 }
 
 /**
- * Analyse les données HTML pour extraire les informations des matières premières
+ * Parses HTML data to extract commodity information
  */
 function parseCommoditiesData(data: any): Commodity[] {
   try {
     console.log("Parsing data from API response");
     
-    // Vérifier si nous avons des données
+    // Check if we have data
     if (!data || !data.data) {
-      console.error("Données invalides reçues de l'API");
-      throw new Error("Données invalides reçues de l'API");
+      console.error("Invalid data received from API");
+      throw new Error("Invalid data received from API");
     }
     
-    // Parseage du HTML
+    // Parse HTML
     const htmlContent = data.data;
     console.log("HTML content length:", htmlContent.length);
     
-    // Utilisation de node-html-parser pour analyser le HTML
+    // Use node-html-parser to analyze HTML
     const root = parse(htmlContent);
     
     // Log the full HTML to see its structure
     console.log("HTML structure:", root.toString().substring(0, 1000));
     
-    // Essayer différentes sélections pour trouver les données
-    // Sélection 1: Tableaux de données
+    // Try different selections to find data
+    // Selection 1: Data tables
     let commodityRows = root.querySelectorAll('.tv-data-table__row');
     console.log("Data table rows found:", commodityRows.length);
     
-    // Sélection 2: Si la sélection 1 ne fonctionne pas, essayer une autre sélection
+    // Selection 2: If selection 1 doesn't work, try another selection
     if (!commodityRows || commodityRows.length === 0) {
       commodityRows = root.querySelectorAll('tr[data-rowid]');
       console.log("Row data found with tr[data-rowid]:", commodityRows.length);
     }
 
-    // Sélection 3: Essayer une sélection plus générique
+    // Selection 3: Try a more generic selection
     if (!commodityRows || commodityRows.length === 0) {
       commodityRows = root.querySelectorAll('table tr');
       console.log("Generic table rows found:", commodityRows.length);
     }
     
     if (!commodityRows || commodityRows.length === 0) {
-      console.error("Aucune ligne de matière première trouvée dans le HTML");
+      console.error("No commodity rows found in HTML");
       // Log a sample of the HTML for debugging
       console.log("HTML sample:", htmlContent.substring(0, 1000));
-      throw new Error("Échec de l'extraction des données");
+      throw new Error("Failed to extract data");
     }
     
     const commodities: Commodity[] = [];
@@ -151,28 +151,28 @@ function parseCommoditiesData(data: any): Commodity[] {
       try {
         console.log(`Processing row ${index}:`, row.toString().substring(0, 200));
         
-        // Extraire les données de chaque cellule
+        // Extract data from each cell
         const cells = row.querySelectorAll('td');
         
         if (!cells || cells.length < 6) {
           console.log(`Row ${index}: Not enough cells (${cells?.length || 0}), skipping`);
-          return; // Ligne incomplète, on saute
+          return; // Incomplete row, skip
         }
         
-        // Extraire le symbole et le nom
+        // Extract symbol and name
         const firstCell = cells[0];
         console.log(`Row ${index}, First cell:`, firstCell.toString());
         
         let symbol = '';
         let name = '';
         
-        // Essayer d'extraire le symbole et le nom avec différentes méthodes
+        // Try to extract symbol and name with different methods
         const symbolElement = firstCell.querySelector('.symbol-name');
         if (symbolElement) {
           symbol = symbolElement.text.trim();
           name = symbolElement.getAttribute('title') || '';
         } else {
-          // Autre méthode d'extraction
+          // Another extraction method
           const allText = firstCell.text.trim();
           const parts = allText.split(/\s+/);
           symbol = parts[0] || '';
@@ -184,7 +184,7 @@ function parseCommoditiesData(data: any): Commodity[] {
           return;
         }
         
-        // Extraire les autres informations
+        // Extract other information
         console.log(`Row ${index}: Processing price from cell 1`);
         const priceText = cells[1]?.text.trim().replace(/[^\d.,]/g, '').replace(',', '.');
         const price = parseFloat(priceText) || 0;
@@ -205,11 +205,11 @@ function parseCommoditiesData(data: any): Commodity[] {
         const lowText = cells[5]?.text.trim().replace(/[^\d.,]/g, '').replace(',', '.');
         const low = parseFloat(lowText) || 0;
         
-        // Évaluation technique (si disponible)
+        // Technical evaluation (if available)
         console.log(`Row ${index}: Processing evaluation from cell 6`);
-        const technicalEvaluation = cells[6]?.text.trim() || 'Neutre';
+        const technicalEvaluation = cells[6]?.text.trim() || 'Neutral';
         
-        // Déterminer le type de matière première
+        // Determine commodity type
         const type = getCommodityType(symbol, name);
         
         commodities.push({
@@ -226,19 +226,19 @@ function parseCommoditiesData(data: any): Commodity[] {
         
         console.log(`Successfully processed commodity: ${symbol}`);
       } catch (err) {
-        console.error(`Erreur lors de l'analyse de la ligne ${index}:`, err);
+        console.error(`Error parsing row ${index}:`, err);
       }
     });
     
     if (commodities.length === 0) {
-      console.error("Aucune matière première n'a pu être extraite");
-      throw new Error("Aucune matière première n'a pu être extraite");
+      console.error("No commodities could be extracted");
+      throw new Error("No commodities could be extracted");
     }
     
     console.log(`Successfully extracted ${commodities.length} commodities`);
     return commodities;
   } catch (error) {
-    console.error('Erreur lors de l\'analyse des données:', error);
+    console.error('Error parsing data:', error);
     throw error;
   }
 }
