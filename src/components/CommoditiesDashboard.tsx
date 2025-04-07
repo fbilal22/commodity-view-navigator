@@ -5,23 +5,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CommoditiesTable from "./CommoditiesTable";
 import CommodityCard from "./CommodityCard";
-import { RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CommoditiesDashboard() {
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await fetchCommoditiesData();
       setCommodities(data);
       setLastUpdated(new Date());
+      
+      if (data.length === 0) {
+        setError("Aucune donnée n'a été trouvée");
+      }
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
+      setError("Erreur lors du chargement des données");
       toast.error("Erreur lors du chargement des données");
     } finally {
       setLoading(false);
@@ -45,6 +53,35 @@ export default function CommoditiesDashboard() {
   const copperCommodities = commodities.filter(c => c.type === 'copper');
   const aluminumCommodities = commodities.filter(c => c.type === 'aluminum');
   const cobaltCommodities = commodities.filter(c => c.type === 'cobalt');
+
+  // Composant de chargement pour un groupe de cartes
+  const LoadingCards = ({ count = 4 }) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <Card key={i} className="overflow-hidden h-full border-slate-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <div className="flex flex-col gap-1 w-full">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+            <div className="flex justify-between items-end mt-3">
+              <div className="flex-1">
+                <Skeleton className="h-6 w-20 mb-2" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div>
+                <Skeleton className="h-3 w-14 mb-1" />
+                <Skeleton className="h-3 w-14" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -74,6 +111,13 @@ export default function CommoditiesDashboard() {
         </div>
       </div>
 
+      {error && (
+        <div className="bg-destructive/15 p-4 rounded-md flex items-center gap-2 text-destructive">
+          <AlertCircle size={20} />
+          <p>{error}</p>
+        </div>
+      )}
+
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
           <TabsTrigger value="all">Tous</TabsTrigger>
@@ -82,13 +126,21 @@ export default function CommoditiesDashboard() {
         </TabsList>
         
         <TabsContent value="all" className="space-y-6">
-          <CommoditiesTable commodities={commodities} />
+          {loading ? (
+            <Skeleton className="h-[300px] w-full rounded-md" />
+          ) : (
+            <CommoditiesTable commodities={commodities} />
+          )}
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {commodities.slice(0, 4).map(commodity => (
-              <CommodityCard key={commodity.symbol} commodity={commodity} />
-            ))}
-          </div>
+          {loading ? (
+            <LoadingCards count={4} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {commodities.slice(0, 4).map(commodity => (
+                <CommodityCard key={commodity.symbol} commodity={commodity} />
+              ))}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="precious" className="space-y-6">
@@ -99,11 +151,19 @@ export default function CommoditiesDashboard() {
                 <CardDescription>Tendance actuelle des contrats à terme sur l'or</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-4">
-                  {goldCommodities.map(commodity => (
-                    <CommodityCard key={commodity.symbol} commodity={commodity} />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                      <Skeleton key={i} className="h-[100px] w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {goldCommodities.map(commodity => (
+                      <CommodityCard key={commodity.symbol} commodity={commodity} />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -113,11 +173,19 @@ export default function CommoditiesDashboard() {
                 <CardDescription>Tendance actuelle des contrats à terme sur l'argent</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-4">
-                  {silverCommodities.map(commodity => (
-                    <CommodityCard key={commodity.symbol} commodity={commodity} />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                      <Skeleton key={i} className="h-[100px] w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {silverCommodities.map(commodity => (
+                      <CommodityCard key={commodity.symbol} commodity={commodity} />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -131,11 +199,19 @@ export default function CommoditiesDashboard() {
                 <CardDescription>Tendance actuelle des contrats à terme sur le cuivre</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-4">
-                  {copperCommodities.map(commodity => (
-                    <CommodityCard key={commodity.symbol} commodity={commodity} />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                      <Skeleton key={i} className="h-[100px] w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {copperCommodities.map(commodity => (
+                      <CommodityCard key={commodity.symbol} commodity={commodity} />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -145,11 +221,19 @@ export default function CommoditiesDashboard() {
                 <CardDescription>Tendance actuelle des contrats à terme sur l'aluminium</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-4">
-                  {aluminumCommodities.slice(0, 3).map(commodity => (
-                    <CommodityCard key={commodity.symbol} commodity={commodity} />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                      <Skeleton key={i} className="h-[100px] w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {aluminumCommodities.slice(0, 3).map(commodity => (
+                      <CommodityCard key={commodity.symbol} commodity={commodity} />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -159,11 +243,19 @@ export default function CommoditiesDashboard() {
                 <CardDescription>Tendance actuelle des contrats à terme sur le cobalt</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-4">
-                  {cobaltCommodities.map(commodity => (
-                    <CommodityCard key={commodity.symbol} commodity={commodity} />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                      <Skeleton key={i} className="h-[100px] w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {cobaltCommodities.map(commodity => (
+                      <CommodityCard key={commodity.symbol} commodity={commodity} />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
