@@ -15,7 +15,7 @@ interface WidgetOptions {
   chartShape: string;
   timePeriod: string;
   isAdaptive: boolean;
-  container?: HTMLElement;
+  container: HTMLElement;
 }
 
 interface WidgetAPI {

@@ -1,22 +1,43 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import FinlogixChart from "@/components/FinlogixChart";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 
 const Charts = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [symbolName, setSymbolName] = useState("Gold");
   const [chartShape, setChartShape] = useState<"candles" | "line">("candles");
   const [timePeriod, setTimePeriod] = useState("D1");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Add a key to force remount the chart component
+  const [chartKey, setChartKey] = useState(0);
+
+  // When the component mounts, show a toast to let the user know about the chart
+  useEffect(() => {
+    toast({
+      title: "Financial Charts",
+      description: "Use the settings above to customize the chart display",
+    });
+  }, [toast]);
 
   const refreshChart = () => {
     setIsRefreshing(true);
-    // Simulate refreshing by resetting after a short delay
+    // Increment the key to force a remount of the chart component
+    setChartKey(prev => prev + 1);
+    
+    // Show a toast to indicate refresh
+    toast({
+      title: "Refreshing chart",
+      description: `Loading ${symbolName} chart data...`,
+    });
+    
+    // Reset the refreshing state after a delay
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1000);
@@ -57,7 +78,10 @@ const Charts = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Symbol</label>
-              <Select value={symbolName} onValueChange={setSymbolName}>
+              <Select value={symbolName} onValueChange={(value) => {
+                setSymbolName(value);
+                refreshChart();
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select symbol" />
                 </SelectTrigger>
@@ -74,7 +98,10 @@ const Charts = () => {
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Chart Type</label>
-              <Select value={chartShape} onValueChange={(value: "candles" | "line") => setChartShape(value)}>
+              <Select value={chartShape} onValueChange={(value: "candles" | "line") => {
+                setChartShape(value);
+                refreshChart();
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select chart type" />
                 </SelectTrigger>
@@ -87,7 +114,10 @@ const Charts = () => {
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Time Period</label>
-              <Select value={timePeriod} onValueChange={setTimePeriod}>
+              <Select value={timePeriod} onValueChange={(value) => {
+                setTimePeriod(value);
+                refreshChart();
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select time period" />
                 </SelectTrigger>
@@ -110,8 +140,9 @@ const Charts = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="w-full h-[600px] rounded-md overflow-hidden">
+          <div className="w-full h-[600px] rounded-md overflow-hidden border">
             <FinlogixChart 
+              key={chartKey}
               symbolName={symbolName}
               chartShape={chartShape}
               timePeriod={timePeriod}

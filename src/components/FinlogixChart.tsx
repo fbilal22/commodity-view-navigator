@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface FinlogixChartProps {
   widgetId?: string;
@@ -15,55 +15,82 @@ export default function FinlogixChart({
   timePeriod = "D1"
 }: FinlogixChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
-
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
-    // Load the Finlogix widget script
+    // Clean up any previous instances
+    if (containerRef.current) {
+      containerRef.current.innerHTML = '';
+    }
+    
+    // Function to initialize the widget
+    const initWidget = () => {
+      if (typeof window.Widget !== 'undefined' && containerRef.current) {
+        // Clear previous instances
+        containerRef.current.innerHTML = '';
+        
+        try {
+          window.Widget.init({
+            widgetId,
+            type: "BigChart",
+            language: "en",
+            showBrand: true,
+            isShowTradeButton: true,
+            isShowBeneathLink: true,
+            isShowDataFromACYInfo: true,
+            symbolName,
+            hasSearchBar: false,
+            hasSymbolName: false,
+            hasSymbolChange: false,
+            hasButton: false,
+            chartShape,
+            timePeriod,
+            isAdaptive: true,
+            container: containerRef.current
+          });
+          console.log("Finlogix widget initialized with:", { symbolName, chartShape, timePeriod });
+          setIsLoading(false);
+        } catch (error) {
+          console.error("Error initializing Finlogix widget:", error);
+        }
+      }
+    };
+
+    // Load the script if it doesn't exist
     if (!document.querySelector('script[src="https://widget.finlogix.com/Widget.js"]')) {
       const script = document.createElement('script');
       script.src = "https://widget.finlogix.com/Widget.js";
-      script.type = "text/javascript";
       script.async = true;
       script.onload = () => {
-        if (containerRef.current && !initialized.current) {
-          initialized.current = true;
-          initWidget();
-        }
+        console.log("Finlogix script loaded");
+        setTimeout(initWidget, 500); // Give a small delay to ensure Widget is fully loaded
       };
       document.body.appendChild(script);
-    } else if (!initialized.current && containerRef.current) {
-      // If script already exists but widget not initialized
-      initialized.current = true;
-      setTimeout(initWidget, 100); // Give a small delay to ensure Widget is available
+    } else {
+      // If script already exists, initialize widget directly
+      console.log("Finlogix script already exists, initializing widget");
+      setTimeout(initWidget, 500);
     }
 
-    function initWidget() {
-      if (typeof window.Widget !== 'undefined') {
-        window.Widget.init({
-          widgetId,
-          type: "BigChart",
-          language: "en",
-          showBrand: true,
-          isShowTradeButton: true,
-          isShowBeneathLink: true,
-          isShowDataFromACYInfo: true,
-          symbolName,
-          hasSearchBar: false,
-          hasSymbolName: false,
-          hasSymbolChange: false,
-          hasButton: false,
-          chartShape,
-          timePeriod,
-          isAdaptive: true,
-          container: containerRef.current
-        });
-      }
-    }
-
+    // Cleanup function
     return () => {
-      initialized.current = false;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
     };
-  }, [widgetId, symbolName, chartShape, timePeriod]);
+  }, [widgetId, symbolName, chartShape, timePeriod]); // Re-run when these props change
 
-  return <div ref={containerRef} className="finlogix-container w-full h-[500px] rounded-md overflow-hidden"></div>;
+  return (
+    <div className="w-full h-full relative">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      )}
+      <div 
+        ref={containerRef} 
+        className="finlogix-container w-full h-full min-h-[500px] rounded-md overflow-hidden"
+      ></div>
+    </div>
+  );
 }
