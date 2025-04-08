@@ -2,21 +2,37 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Search } from "lucide-react";
 import FinlogixChart from "@/components/FinlogixChart";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Predefined symbols that users can search from
+const availableSymbols = [
+  "Gold", "Silver", "Copper", "Apple", "Tesla", "Bitcoin", 
+  "Google", "Amazon", "Microsoft", "EURUSD", "GBPUSD", "USDJPY",
+  "S&P 500", "Dow Jones", "Nasdaq", "Crude Oil", "Natural Gas"
+];
 
 const Charts = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [symbolName, setSymbolName] = useState("Gold");
+  const [symbolSearch, setSymbolSearch] = useState("");
   const [chartShape, setChartShape] = useState<"candles" | "line">("candles");
   const [timePeriod, setTimePeriod] = useState("D1");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  // Add a key to force remount the chart component
   const [chartKey, setChartKey] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Filter symbols based on search input
+  const filteredSymbols = availableSymbols.filter((symbol) =>
+    symbol.toLowerCase().includes(symbolSearch.toLowerCase())
+  );
 
   // When the component mounts, show a toast to let the user know about the chart
   useEffect(() => {
@@ -41,6 +57,18 @@ const Charts = () => {
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1000);
+  };
+
+  const handleSymbolSelect = (symbol: string) => {
+    if (symbol !== symbolName) {
+      setSymbolName(symbol);
+      setSearchOpen(false);
+      toast({
+        title: "Symbol Changed",
+        description: `Now displaying chart for ${symbol}`,
+      });
+      refreshChart();
+    }
   };
 
   return (
@@ -78,22 +106,43 @@ const Charts = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Symbol</label>
-              <Select value={symbolName} onValueChange={(value) => {
-                setSymbolName(value);
-                refreshChart();
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select symbol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Gold">Gold</SelectItem>
-                  <SelectItem value="Silver">Silver</SelectItem>
-                  <SelectItem value="Copper">Copper</SelectItem>
-                  <SelectItem value="Apple">Apple</SelectItem>
-                  <SelectItem value="Tesla">Tesla</SelectItem>
-                  <SelectItem value="Bitcoin">Bitcoin</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center space-x-2">
+                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      role="combobox" 
+                      aria-expanded={searchOpen}
+                      className="w-full justify-between"
+                    >
+                      {symbolName}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search symbol..." 
+                        value={symbolSearch}
+                        onValueChange={setSymbolSearch}
+                        className="h-9"
+                      />
+                      <CommandEmpty>No symbol found.</CommandEmpty>
+                      <CommandGroup className="max-h-64 overflow-auto">
+                        {filteredSymbols.map((symbol) => (
+                          <CommandItem
+                            key={symbol}
+                            onSelect={() => handleSymbolSelect(symbol)}
+                            className="cursor-pointer"
+                          >
+                            {symbol}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
             
             <div className="space-y-2">
