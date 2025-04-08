@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Predefined symbols that users can search from
@@ -127,18 +127,20 @@ const Charts = () => {
                         onValueChange={setSymbolSearch}
                         className="h-9"
                       />
-                      <CommandEmpty>No symbol found.</CommandEmpty>
-                      <CommandGroup className="max-h-64 overflow-auto">
-                        {filteredSymbols.map((symbol) => (
-                          <CommandItem
-                            key={symbol}
-                            onSelect={() => handleSymbolSelect(symbol)}
-                            className="cursor-pointer"
-                          >
-                            {symbol}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
+                      <CommandList>
+                        <CommandEmpty>No symbol found.</CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {filteredSymbols.map((symbol) => (
+                            <CommandItem
+                              key={symbol}
+                              onSelect={() => handleSymbolSelect(symbol)}
+                              className="cursor-pointer"
+                            >
+                              {symbol}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
                     </Command>
                   </PopoverContent>
                 </Popover>
