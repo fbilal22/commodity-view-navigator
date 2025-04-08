@@ -4,8 +4,9 @@ import CommoditiesDashboard from "@/components/CommoditiesDashboard";
 import ApiKeyForm from "@/components/ApiKeyForm";
 import { validateApiKey, updateApiKey } from "@/services/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { KeyRound } from "lucide-react";
+import { KeyRound, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const [isKeyValid, setIsKeyValid] = useState(false);
@@ -63,7 +64,13 @@ const Index = () => {
     <div className="container mx-auto py-8 px-4">
       {isKeyValid && !showForm ? (
         <>
-          <div className="mb-4 flex justify-end">
+          <div className="mb-4 flex justify-end gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/charts">
+                <LineChart className="mr-2 h-4 w-4" />
+                Financial Charts
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" onClick={handleChangeKey}>
               <KeyRound className="mr-2 h-4 w-4" />
               Change API Key
