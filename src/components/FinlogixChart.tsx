@@ -16,7 +16,6 @@ export default function FinlogixChart({
 }: FinlogixChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [initAttempts, setInitAttempts] = useState(0);
   
   useEffect(() => {
     // Clean up any previous instances
@@ -26,85 +25,70 @@ export default function FinlogixChart({
     
     setIsLoading(true);
     
-    // Function to initialize the widget
-    const initWidget = () => {
-      if (typeof window.Widget !== 'undefined' && containerRef.current) {
-        // Clear previous instances
-        containerRef.current.innerHTML = '';
-        
+    // Create the exact HTML structure as provided
+    const createWidgetHTML = () => {
+      if (!containerRef.current) return;
+      
+      // Create and append the finlogix container
+      const finlogixContainer = document.createElement('div');
+      finlogixContainer.className = 'finlogix-container';
+      containerRef.current.appendChild(finlogixContainer);
+      
+      // Create and add the Widget.js script if it doesn't exist
+      if (!document.querySelector('script[src="https://widget.finlogix.com/Widget.js"]')) {
+        const script = document.createElement('script');
+        script.src = "https://widget.finlogix.com/Widget.js";
+        script.async = true;
+        script.onload = initializeWidget;
+        document.body.appendChild(script);
+      } else {
+        // If the script is already loaded, initialize the widget directly
+        initializeWidget();
+      }
+    };
+    
+    // Initialize the widget with the exact configuration
+    const initializeWidget = () => {
+      if (typeof window.Widget !== 'undefined') {
         try {
           window.Widget.init({
-            widgetId,
+            widgetId: widgetId,
             type: "BigChart",
             language: "en",
             showBrand: true,
             isShowTradeButton: true,
             isShowBeneathLink: true,
             isShowDataFromACYInfo: true,
-            symbolName,
+            symbolName: symbolName,
             hasSearchBar: false,
             hasSymbolName: false,
             hasSymbolChange: false,
             hasButton: false,
-            chartShape,
-            timePeriod,
-            isAdaptive: true,
-            container: containerRef.current
+            chartShape: chartShape,
+            timePeriod: timePeriod,
+            isAdaptive: true
           });
           console.log("Finlogix widget initialized with:", { symbolName, chartShape, timePeriod });
           setIsLoading(false);
         } catch (error) {
           console.error("Error initializing Finlogix widget:", error);
-          
-          // If we fail, try again after a delay (up to 3 times)
-          if (initAttempts < 3) {
-            setTimeout(() => {
-              setInitAttempts(prev => prev + 1);
-              initWidget();
-            }, 1000);
-          } else {
-            setIsLoading(false);
-          }
+          setIsLoading(false);
         }
-      } else if (initAttempts < 3) {
-        // If Widget is not available yet, try again after a delay
-        setTimeout(() => {
-          setInitAttempts(prev => prev + 1);
-          initWidget();
-        }, 1000);
       } else {
-        console.error("Failed to initialize Finlogix widget after multiple attempts");
+        console.error("Widget is not defined");
         setIsLoading(false);
       }
     };
-
-    // Load the script if it doesn't exist
-    if (!document.querySelector('script[src="https://widget.finlogix.com/Widget.js"]')) {
-      const script = document.createElement('script');
-      script.src = "https://widget.finlogix.com/Widget.js";
-      script.async = true;
-      script.onload = () => {
-        console.log("Finlogix script loaded");
-        setTimeout(initWidget, 500); // Give a small delay to ensure Widget is fully loaded
-      };
-      script.onerror = () => {
-        console.error("Failed to load Finlogix script");
-        setIsLoading(false);
-      };
-      document.body.appendChild(script);
-    } else {
-      // If script already exists, initialize widget directly
-      console.log("Finlogix script already exists, initializing widget");
-      setTimeout(initWidget, 500);
-    }
-
+    
+    createWidgetHTML();
+    
     // Cleanup function
     return () => {
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
     };
-  }, [widgetId, symbolName, chartShape, timePeriod, initAttempts]); // Re-run when these props change or after retry attempts
+  }, [widgetId, symbolName, chartShape, timePeriod]); // Re-run when these props change
 
   return (
     <div className="w-full h-full relative">
@@ -115,7 +99,7 @@ export default function FinlogixChart({
       )}
       <div 
         ref={containerRef} 
-        className="finlogix-container w-full h-full min-h-[500px] rounded-md overflow-hidden"
+        className="w-full h-full min-h-[500px] rounded-md overflow-hidden"
         data-symbol={symbolName}
         data-shape={chartShape}
         data-period={timePeriod}
