@@ -71,6 +71,12 @@ function createSampleOptionsData(symbol: string): OptionData[] {
     case "NVDA": baseStrike = 820; break;
     case "SPY": baseStrike = 520; break;
     case "QQQ": baseStrike = 450; break;
+    case "ES": baseStrike = 5400; break;
+    case "NQ": baseStrike = 19000; break;
+    case "NIFTY": baseStrike = 22500; break;
+    case "MNQ": baseStrike = 19000; break;
+    case "PLTR": baseStrike = 22; break;
+    case "MES": baseStrike = 5400; break;
     default: baseStrike = 100;
   }
   
