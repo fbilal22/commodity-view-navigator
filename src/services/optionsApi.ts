@@ -46,19 +46,19 @@ function parseOptionsData(data: any, symbol: string): OptionData[] {
       throw new Error("Invalid data received from API");
     }
     
-    // For development/demo purposes, return sample data
+    // For development/demo purposes, return enhanced sample data
     // In a production environment, this would actually parse the HTML
-    return createSampleOptionsData(symbol);
+    return createEnhancedOptionsData(symbol);
     
   } catch (error) {
     console.error('Error parsing options data:', error);
     console.log("Returning sample data due to error");
-    return createSampleOptionsData(symbol);
+    return createEnhancedOptionsData(symbol);
   }
 }
 
-// Create sample data for development and testing
-function createSampleOptionsData(symbol: string): OptionData[] {
+// Create enhanced sample data for development and testing
+function createEnhancedOptionsData(symbol: string): OptionData[] {
   // Set base strike price based on symbol
   let baseStrike = 100;
   switch(symbol) {
@@ -71,15 +71,34 @@ function createSampleOptionsData(symbol: string): OptionData[] {
     case "NVDA": baseStrike = 820; break;
     case "SPY": baseStrike = 520; break;
     case "QQQ": baseStrike = 450; break;
+    case "ZW": baseStrike = 550; break;
+    case "ZC": baseStrike = 450; break;
+    case "ZS": baseStrike = 1200; break;
+    case "ZL": baseStrike = 900; break;
     default: baseStrike = 100;
   }
   
   // Current date for reference
   const today = new Date();
   
-  // Generate expiration dates (3rd Friday of next 3 months)
+  // Generate expiration dates (weekly and monthly options)
   const expirations: string[] = [];
-  for (let i = 0; i < 6; i++) {
+  
+  // Add weekly expirations (next 8 weeks)
+  for (let i = 0; i < 8; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + (i * 7));
+    // Set to Friday
+    const day = date.getDay();
+    const daysToFriday = (day <= 5) ? (5 - day) : (5 + 7 - day);
+    date.setDate(date.getDate() + daysToFriday);
+    
+    // Format as YYYY-MM-DD
+    expirations.push(date.toISOString().split('T')[0]);
+  }
+  
+  // Add monthly expirations (3rd Friday of next 6 months)
+  for (let i = 1; i <= 6; i++) {
     const date = new Date(today);
     date.setMonth(today.getMonth() + i);
     date.setDate(1); // First day of month
@@ -94,16 +113,33 @@ function createSampleOptionsData(symbol: string): OptionData[] {
     expirations.push(date.toISOString().split('T')[0]);
   }
   
+  // Add LEAPS (longer-term expirations)
+  for (let i = 1; i <= 2; i++) {
+    const date = new Date(today);
+    date.setFullYear(today.getFullYear() + i);
+    date.setMonth(0); // January
+    date.setDate(15); // Approximate mid-month
+    
+    // Format as YYYY-MM-DD
+    expirations.push(date.toISOString().split('T')[0]);
+  }
+  
+  // Sort expirations and remove duplicates
+  const uniqueExpirations = [...new Set(expirations)].sort();
+  
   const result: OptionData[] = [];
   
   // For each expiration date
-  expirations.forEach(expDate => {
+  uniqueExpirations.forEach(expDate => {
     // Calculate days to expiration for pricing
     const daysToExp = Math.round((new Date(expDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
-    // Generate a range of strikes around the base strike
-    for (let i = -10; i <= 10; i++) {
-      const strike = baseStrike + (i * (baseStrike * 0.025)); // 2.5% increments
+    // Generate strike prices around base strike (more strikes for nearer expiration dates)
+    const strikePriceCount = daysToExp < 30 ? 20 : daysToExp < 90 ? 15 : 10;
+    const strikeIncrement = baseStrike * 0.025; // 2.5% increments
+    
+    for (let i = -Math.floor(strikePriceCount/2); i <= Math.floor(strikePriceCount/2); i++) {
+      const strike = Math.round((baseStrike + (i * strikeIncrement)) * 100) / 100;
       
       // Calculate option's moneyness (ATM = 0, OTM < 0, ITM > 0)
       const callMoneyness = (baseStrike - strike) / baseStrike;
@@ -140,35 +176,40 @@ function createSampleOptionsData(symbol: string): OptionData[] {
         Math.abs(putDelta) * strike * 0.1 * Math.sqrt(daysToExp / 30) * putIV
       );
       
-      // Add bid-ask spread
-      const callBidAskSpread = callPrice * 0.05;
-      const putBidAskSpread = putPrice * 0.05;
+      // Add bid-ask spread (tighter for near-the-money options)
+      const moneyness = Math.abs(callMoneyness);
+      const spreadFactor = 0.05 + (moneyness * 0.2);
+      const callBidAskSpread = callPrice * spreadFactor;
+      const putBidAskSpread = putPrice * spreadFactor;
+      
+      // Some options might have no bids for deep OTM
+      const hasBidAsk = callPrice > 0.5 || Math.random() > 0.3;
       
       result.push({
         symbol,
         strike,
         expirationDate: expDate,
         call: {
-          bid: Math.max(0.01, callPrice - callBidAskSpread / 2),
-          ask: callPrice + callBidAskSpread / 2,
-          price: callPrice,
-          delta: callDelta,
-          gamma: callGamma,
-          theta: callTheta,
-          vega: callVega,
-          rho: callRho,
-          iv: callIV
+          bid: hasBidAsk ? Math.max(0.01, Math.round((callPrice - callBidAskSpread / 2) * 10) / 10) : 0,
+          ask: hasBidAsk ? Math.round((callPrice + callBidAskSpread / 2) * 10) / 10 : 0,
+          price: Math.round(callPrice * 10) / 10,
+          delta: Math.round(callDelta * 100) / 100,
+          gamma: Math.round(callGamma * 1000) / 1000,
+          theta: Math.round(callTheta * 100) / 100,
+          vega: Math.round(callVega * 100) / 100,
+          rho: Math.round(callRho * 1000) / 1000,
+          iv: Math.round(callIV * 100) / 100
         },
         put: {
-          bid: Math.max(0.01, putPrice - putBidAskSpread / 2),
-          ask: putPrice + putBidAskSpread / 2,
-          price: putPrice,
-          delta: putDelta,
-          gamma: putGamma,
-          theta: putTheta,
-          vega: putVega,
-          rho: putRho,
-          iv: putIV
+          bid: hasBidAsk ? Math.max(0.01, Math.round((putPrice - putBidAskSpread / 2) * 10) / 10) : 0,
+          ask: hasBidAsk ? Math.round((putPrice + putBidAskSpread / 2) * 10) / 10 : 0,
+          price: Math.round(putPrice * 10) / 10,
+          delta: Math.round(putDelta * 100) / 100,
+          gamma: Math.round(putGamma * 1000) / 1000,
+          theta: Math.round(putTheta * 100) / 100,
+          vega: Math.round(putVega * 100) / 100,
+          rho: Math.round(putRho * 1000) / 1000,
+          iv: Math.round(putIV * 100) / 100
         }
       });
     }
