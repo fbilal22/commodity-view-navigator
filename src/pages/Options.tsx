@@ -5,12 +5,11 @@ import { toast } from "sonner";
 import { fetchOptionsData } from "@/services/optionsApi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { Search } from "lucide-react";
 import OptionsTable from "@/components/OptionsTable";
 import { OptionData } from "@/types/options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Options() {
   const [symbol, setSymbol] = useState("NVDA");
@@ -44,9 +43,8 @@ export default function Options() {
     }
   }, [isError, error]);
 
-  // Popular stock tickers and futures
+  // Popular stock tickers
   const popularTickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "SPY", "QQQ"];
-  const popularFutures = ["ZW", "ZC", "ZS", "ZL", "HE", "LE", "GF"];
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -55,7 +53,7 @@ export default function Options() {
           <h1 className="text-3xl font-bold">Options Chain</h1>
           <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">
             <Input
-              placeholder="Enter symbol (e.g., NVDA, ZW)"
+              placeholder="Enter symbol (e.g., NVDA)"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full md:w-64"
@@ -67,74 +65,48 @@ export default function Options() {
           </form>
         </div>
 
-        <div className="flex flex-col space-y-2">
-          <div className="text-sm font-medium">Stocks</div>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {popularTickers.map(ticker => (
-              <Button
-                key={ticker}
-                variant={ticker === symbol ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setSearchInput(ticker);
-                  setSymbol(ticker);
-                }}
-              >
-                {ticker}
-              </Button>
-            ))}
-          </div>
-          
-          <div className="text-sm font-medium">Futures</div>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {popularFutures.map(ticker => (
-              <Button
-                key={ticker}
-                variant={ticker === symbol ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setSearchInput(ticker);
-                  setSymbol(ticker);
-                }}
-              >
-                {ticker}
-              </Button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {popularTickers.map(ticker => (
+            <Button
+              key={ticker}
+              variant={ticker === symbol ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setSearchInput(ticker);
+                setSymbol(ticker);
+              }}
+            >
+              {ticker}
+            </Button>
+          ))}
         </div>
 
         <Card className="bg-card rounded-lg p-4 shadow">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-            <div>
-              <h2 className="text-2xl font-semibold">{symbol} Options Chain</h2>
-              <p className="text-sm text-muted-foreground">
-                Options data for {symbol}
-              </p>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">{symbol} Options Chain</h2>
+            <div className="flex gap-2">
+              <Button 
+                variant={viewType === "expiration" ? "default" : "outline"}
+                onClick={() => setViewType("expiration")}
+                size="sm"
+              >
+                By Expiration
+              </Button>
+              <Button 
+                variant={viewType === "strike" ? "default" : "outline"}
+                onClick={() => setViewType("strike")}
+                size="sm"
+              >
+                By Strike
+              </Button>
             </div>
-            <Tabs 
-              value={viewType} 
-              onValueChange={(value) => setViewType(value as "expiration" | "strike")}
-              className="w-full md:w-auto"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="expiration">By Expiration</TabsTrigger>
-                <TabsTrigger value="strike">By Strike</TabsTrigger>
-              </TabsList>
-            </Tabs>
           </div>
 
           {isLoading ? (
             <div className="space-y-4">
-              <div className="flex justify-between">
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-8 w-48" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                {Array(10).fill(0).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-64 w-full" />
             </div>
           ) : isError ? (
             <div className="text-center p-8 text-red-500">
