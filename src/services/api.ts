@@ -1,9 +1,8 @@
-
 import { toast } from "sonner";
 import { parse } from "node-html-parser";
 
 // API key variable that can be updated
-let API_KEY = 'V06SpYv2b/ptbqPxnvvhtg==3F5KAONfyIW0JKVl';
+export let API_KEY = 'V06SpYv2b/ptbqPxnvvhtg==3F5KAONfyIW0JKVl';
 
 // Function to update the API key
 export function updateApiKey(newKey: string) {

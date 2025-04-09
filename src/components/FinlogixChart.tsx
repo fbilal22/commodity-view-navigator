@@ -49,8 +49,11 @@ export default function FinlogixChart({
     
     // Initialize the widget with the exact configuration
     const initializeWidget = () => {
-      if (typeof window.Widget !== 'undefined') {
+      if (typeof window.Widget !== 'undefined' && containerRef.current) {
         try {
+          const container = containerRef.current.querySelector('.finlogix-container');
+          if (!container) return;
+          
           window.Widget.init({
             widgetId: widgetId,
             type: "BigChart",
@@ -66,7 +69,8 @@ export default function FinlogixChart({
             hasButton: false,
             chartShape: chartShape,
             timePeriod: timePeriod,
-            isAdaptive: true
+            isAdaptive: true,
+            container: container // Add the required container property
           });
           console.log("Finlogix widget initialized with:", { symbolName, chartShape, timePeriod });
           setIsLoading(false);

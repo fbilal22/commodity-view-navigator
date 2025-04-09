@@ -4,7 +4,7 @@ import CommoditiesDashboard from "@/components/CommoditiesDashboard";
 import ApiKeyForm from "@/components/ApiKeyForm";
 import { validateApiKey, updateApiKey } from "@/services/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { KeyRound, LineChart } from "lucide-react";
+import { KeyRound, LineChart, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -65,6 +65,12 @@ const Index = () => {
       {isKeyValid && !showForm ? (
         <>
           <div className="mb-4 flex justify-end gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/options">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Options Dashboard
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to="/charts">
                 <LineChart className="mr-2 h-4 w-4" />
