@@ -3,13 +3,13 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { fetchOptionsData } from "@/services/optionsApi";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import OptionsTable from "@/components/OptionsTable";
-import OptionsStrikeChart from "@/components/OptionsStrikeChart";
 import { OptionData } from "@/types/options";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 
 export default function Options() {
   const [symbol, setSymbol] = useState("NVDA");
@@ -43,17 +43,20 @@ export default function Options() {
     }
   }, [isError, error]);
 
+  // Popular stock tickers
+  const popularTickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "SPY", "QQQ"];
+
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-6 px-4">
       <div className="flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Options Dashboard</h1>
-          <form onSubmit={handleSearch} className="flex gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h1 className="text-3xl font-bold">Options Chain</h1>
+          <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">
             <Input
               placeholder="Enter symbol (e.g., NVDA)"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-64"
+              className="w-full md:w-64"
             />
             <Button type="submit">
               <Search className="mr-2 h-4 w-4" />
@@ -62,20 +65,48 @@ export default function Options() {
           </form>
         </div>
 
-        <div className="bg-card rounded-lg p-4 shadow">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {popularTickers.map(ticker => (
+            <Button
+              key={ticker}
+              variant={ticker === symbol ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setSearchInput(ticker);
+                setSymbol(ticker);
+              }}
+            >
+              {ticker}
+            </Button>
+          ))}
+        </div>
+
+        <Card className="bg-card rounded-lg p-4 shadow">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">{symbol} Options Chain</h2>
-            <Tabs value={viewType} onValueChange={(v) => setViewType(v as "expiration" | "strike")}>
-              <TabsList>
-                <TabsTrigger value="expiration">Par expiration</TabsTrigger>
-                <TabsTrigger value="strike">Par strike</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex gap-2">
+              <Button 
+                variant={viewType === "expiration" ? "default" : "outline"}
+                onClick={() => setViewType("expiration")}
+                size="sm"
+              >
+                By Expiration
+              </Button>
+              <Button 
+                variant={viewType === "strike" ? "default" : "outline"}
+                onClick={() => setViewType("strike")}
+                size="sm"
+              >
+                By Strike
+              </Button>
+            </div>
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-64 w-full" />
             </div>
           ) : isError ? (
             <div className="text-center p-8 text-red-500">
@@ -85,17 +116,12 @@ export default function Options() {
               </Button>
             </div>
           ) : (
-            <>
-              <div className="mb-6">
-                <OptionsStrikeChart optionsData={optionsData || []} />
-              </div>
-              <OptionsTable 
-                optionsData={optionsData || []} 
-                viewType={viewType} 
-              />
-            </>
+            <OptionsTable 
+              optionsData={optionsData || []} 
+              viewType={viewType} 
+            />
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

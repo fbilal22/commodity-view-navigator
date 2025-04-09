@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { OptionData, OptionsViewType } from "@/types/options";
 import {
   Table,
@@ -9,8 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface OptionsTableProps {
   optionsData: OptionData[];
@@ -20,32 +21,60 @@ interface OptionsTableProps {
 export default function OptionsTable({ optionsData, viewType }: OptionsTableProps) {
   const [selectedExpiration, setSelectedExpiration] = useState<string | null>(null);
   const [optionType, setOptionType] = useState<"calls" | "puts">("calls");
+  const [selectedStrike, setSelectedStrike] = useState<number | null>(null);
   
   // Get unique expiration dates
-  const expirationDates = [...new Set(optionsData.map(item => item.expirationDate))];
+  const expirationDates = useMemo(() => 
+    [...new Set(optionsData.map(item => item.expirationDate))].sort(), 
+    [optionsData]
+  );
+  
+  // Get unique strike prices
+  const strikes = useMemo(() => 
+    [...new Set(optionsData.map(item => item.strike))].sort((a, b) => a - b),
+    [optionsData]
+  );
   
   // If no expiration is selected, use the first one
   const currentExpiration = selectedExpiration || expirationDates[0] || "";
   
-  // Filter data based on selected expiration
-  const filteredData = optionsData.filter(item => item.expirationDate === currentExpiration);
+  // If no strike is selected, use the middle one
+  const currentStrike = selectedStrike || 
+    (strikes.length > 0 ? strikes[Math.floor(strikes.length / 2)] : null);
   
-  // Sort by strike price
-  const sortedData = [...filteredData].sort((a, b) => a.strike - b.strike);
+  // Filter data based on view type
+  const filteredData = useMemo(() => {
+    if (viewType === "expiration") {
+      return optionsData.filter(item => item.expirationDate === currentExpiration);
+    } else {
+      return optionsData.filter(item => 
+        currentStrike !== null && item.strike === currentStrike
+      );
+    }
+  }, [optionsData, viewType, currentExpiration, currentStrike]);
+  
+  // Sort by strike price for expiration view, by date for strike view
+  const sortedData = useMemo(() => {
+    if (viewType === "expiration") {
+      return [...filteredData].sort((a, b) => a.strike - b.strike);
+    } else {
+      return [...filteredData].sort((a, b) => 
+        new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime()
+      );
+    }
+  }, [filteredData, viewType]);
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Tabs value={optionType} onValueChange={(value) => setOptionType(value as "calls" | "puts")}>
-            <TabsList>
-              <TabsTrigger value="calls">Calls</TabsTrigger>
-              <TabsTrigger value="puts">Puts</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <Tabs value={optionType} onValueChange={(value) => setOptionType(value as "calls" | "puts")}>
+          <TabsList>
+            <TabsTrigger value="calls">Calls</TabsTrigger>
+            <TabsTrigger value="puts">Puts</TabsTrigger>
+          </TabsList>
+        </Tabs>
         
-        {expirationDates.length > 0 && (
+        {viewType === "expiration" && expirationDates.length > 0 && (
           <Select 
             value={currentExpiration} 
             onValueChange={setSelectedExpiration}
@@ -62,21 +91,41 @@ export default function OptionsTable({ optionsData, viewType }: OptionsTableProp
             </SelectContent>
           </Select>
         )}
+        
+        {viewType === "strike" && strikes.length > 0 && (
+          <Select 
+            value={currentStrike?.toString() || ""} 
+            onValueChange={(value) => setSelectedStrike(parseFloat(value))}
+          >
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select strike" />
+            </SelectTrigger>
+            <SelectContent>
+              {strikes.map(strike => (
+                <SelectItem key={strike} value={strike.toString()}>
+                  {strike.toFixed(2)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
       
       <div className="border rounded-md overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Strike</TableHead>
+              {viewType === "strike" && <TableHead>Expiration</TableHead>}
+              {viewType === "expiration" && <TableHead>Strike</TableHead>}
               <TableHead>Bid</TableHead>
               <TableHead>Ask</TableHead>
-              <TableHead>Prix</TableHead>
+              <TableHead>Price</TableHead>
               <TableHead>Delta</TableHead>
               <TableHead>Gamma</TableHead>
               <TableHead>Theta</TableHead>
               <TableHead>Vega</TableHead>
               <TableHead>Rho</TableHead>
+              <TableHead>IV %</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -90,7 +139,12 @@ export default function OptionsTable({ optionsData, viewType }: OptionsTableProp
                       : option.put.delta < -0.5 ? "bg-red-50 dark:bg-red-950/20" : ""
                   }
                 >
-                  <TableCell className="font-medium">{option.strike.toFixed(2)}</TableCell>
+                  {viewType === "strike" && (
+                    <TableCell className="font-medium">{option.expirationDate}</TableCell>
+                  )}
+                  {viewType === "expiration" && (
+                    <TableCell className="font-medium">{option.strike.toFixed(2)}</TableCell>
+                  )}
                   <TableCell>
                     {optionType === "calls" 
                       ? option.call.bid.toFixed(2) 
@@ -143,11 +197,17 @@ export default function OptionsTable({ optionsData, viewType }: OptionsTableProp
                       : option.put.rho.toFixed(3)
                     }
                   </TableCell>
+                  <TableCell>
+                    {optionType === "calls" 
+                      ? (option.call.iv * 100).toFixed(1) 
+                      : (option.put.iv * 100).toFixed(1)
+                    }%
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center">
+                <TableCell colSpan={viewType === "strike" ? 10 : 10} className="h-24 text-center">
                   No options data available
                 </TableCell>
               </TableRow>
