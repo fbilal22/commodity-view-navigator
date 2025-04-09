@@ -8,6 +8,16 @@ interface FinlogixChartProps {
   timePeriod?: string;
 }
 
+interface WidgetInstance {
+  init: (options: any) => void;
+}
+
+declare global {
+  interface Window {
+    Widget: WidgetInstance;
+  }
+}
+
 export default function FinlogixChart({
   widgetId = "df4d6930-46a8-4229-8a79-d7902afe93dc",
   symbolName = "Apple",
@@ -51,7 +61,8 @@ export default function FinlogixChart({
     const initializeWidget = () => {
       if (typeof window.Widget !== 'undefined' && containerRef.current) {
         try {
-          const container = containerRef.current.querySelector('.finlogix-container');
+          // Fix the type error by ensuring we get an HTMLElement instead of Element
+          const container = containerRef.current.querySelector('.finlogix-container') as HTMLElement;
           if (!container) return;
           
           window.Widget.init({
