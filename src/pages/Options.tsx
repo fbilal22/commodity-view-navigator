@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { fetchOptionsData } from "@/services/optionsApi";
 import { Button } from "@/components/ui/button";
 import OptionsTable from "@/components/OptionsTable";
-import { OptionData } from "@/types/options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import OptionSymbolSearch from "@/components/OptionSymbolSearch";
@@ -44,7 +43,10 @@ export default function Options() {
           <h1 className="text-3xl font-bold">Options Chain</h1>
           <div className="w-full md:w-2/3 lg:w-1/2">
             <OptionSymbolSearch 
-              onSelectSymbol={(selectedSymbol) => setSymbol(selectedSymbol)}
+              onSelectSymbol={(selectedSymbol) => {
+                setSymbol(selectedSymbol);
+                toast.success(`Loading options for ${selectedSymbol}`);
+              }}
               defaultValue={symbol}
             />
           </div>
@@ -58,6 +60,7 @@ export default function Options() {
               size="sm"
               onClick={() => {
                 setSymbol(ticker);
+                toast.success(`Loading options for ${ticker}`);
               }}
             >
               {ticker}

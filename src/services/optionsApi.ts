@@ -61,24 +61,67 @@ function parseOptionsData(data: any, symbol: string): OptionData[] {
 function createSampleOptionsData(symbol: string): OptionData[] {
   // Set base strike price based on symbol
   let baseStrike = 100;
-  switch(symbol) {
-    case "AAPL": baseStrike = 170; break;
-    case "MSFT": baseStrike = 420; break;
-    case "GOOGL": baseStrike = 170; break;
-    case "AMZN": baseStrike = 180; break;
-    case "TSLA": baseStrike = 180; break;
-    case "META": baseStrike = 500; break;
-    case "NVDA": baseStrike = 820; break;
-    case "SPY": baseStrike = 520; break;
-    case "QQQ": baseStrike = 450; break;
-    case "ES": baseStrike = 5400; break;
-    case "NQ": baseStrike = 19000; break;
-    case "NIFTY": baseStrike = 22500; break;
-    case "MNQ": baseStrike = 19000; break;
-    case "PLTR": baseStrike = 22; break;
-    case "MES": baseStrike = 5400; break;
-    default: baseStrike = 100;
-  }
+  
+  // Define price mapping for all symbols
+  const symbolPriceMap: Record<string, number> = {
+    // Stocks
+    "AAPL": 170,
+    "MSFT": 420,
+    "GOOGL": 170,
+    "AMZN": 180,
+    "TSLA": 180,
+    "META": 500,
+    "NVDA": 820,
+    "PLTR": 22,
+    "MSTR": 1200,
+    "AMD": 150,
+    "GOOG": 170,
+    "NFLX": 600,
+    "CSCO": 48,
+    "INTC": 35,
+    "PYPL": 65,
+    "ADBE": 480,
+    "BABA": 75,
+    "JPM": 190,
+    "V": 275,
+    "DIS": 115,
+    
+    // ETFs
+    "SPY": 520,
+    "QQQ": 450,
+    "IWM": 210,
+    "EEM": 40,
+    "XLF": 40,
+    "GLD": 210,
+    "VXX": 25,
+    
+    // Futures
+    "ES": 5400,
+    "NQ": 19000,
+    "MNQ": 19000,
+    "MES": 5400,
+    "GC": 2300,
+    "YM": 40000,
+    "CL": 70,
+    "RTY": 2100,
+    "SI": 27,
+    "ZB": 115,
+    "HG": 450,
+    "NG": 2.2,
+    
+    // Indices
+    "NIFTY": 22500,
+    "BANKNIFTY": 48000,
+    "NDX": 18000,
+    "VIX": 15,
+    "SENSEX": 72000,
+    "SPX": 5200,
+    "RUT": 2100,
+    "DJI": 39000
+  };
+  
+  // Get the base strike price from the map or use default
+  baseStrike = symbolPriceMap[symbol] || 100;
   
   // Current date for reference
   const today = new Date();
